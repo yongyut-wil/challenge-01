@@ -8,10 +8,10 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState, type ReactNode } from "react";
 import { makeQueryClient } from "./query-client";
 
-// Create and export the entire tRPC context utilities object
-export const trpc = createTRPCContext<AppRouter>();
+// Create and export the entire tRPC context utilities object with a new name
+export const trpcClientHooks = createTRPCContext<AppRouter>();
 
-// Provider component remains the same, but will use trpc.TRPCProvider
+// Provider component remains the same, but will use trpcClientHooks.TRPCProvider
 // (which is the same as the TRPCProvider from the context object)
 
 let browserQueryClient: QueryClient | undefined;
@@ -40,11 +40,11 @@ export function TRPCReactProvider(props: { children: ReactNode }) {
 	);
 
 	return (
-		// Use the TRPCProvider from the exported trpc object
-		<trpc.TRPCProvider client={trpcClientInstance} queryClient={queryClient}>
+		// Use the TRPCProvider from the renamed exported object
+		<trpcClientHooks.TRPCProvider client={trpcClientInstance} queryClient={queryClient}>
 			<QueryClientProvider client={queryClient}>
 				{props.children}
 			</QueryClientProvider>
-		</trpc.TRPCProvider>
+		</trpcClientHooks.TRPCProvider>
 	);
 }
