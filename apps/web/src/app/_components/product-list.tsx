@@ -16,29 +16,28 @@ export function ProductList() {
 		hasNextPage,
 		isFetchingNextPage,
 		isLoading,
-	} = useInfiniteQuery(
-		['products'], // Query key for TanStack Query
-		async ({ pageParam }) => { // pageParam comes from getNextPageParam
+	} = useInfiniteQuery({ // Changed to single object argument for v5
+		queryKey: ['products'], // Query key for TanStack Query
+		queryFn: async ({ pageParam }) => { // pageParam comes from getNextPageParam
 			const input = pageParam || { offset: 0, limit: LIMIT };
 			// Directly call the tRPC procedure using the vanilla client
 			const result = await trpcVanillaClient.getAllProducts.query(input);
 			return result; // This should be { products: Product[] }
 		},
-		{
-			getNextPageParam: (lastPage, allPages) => {
-				// lastPage is the result of queryFn: { products: Product[] }
-				if (lastPage.products && lastPage.products.length === LIMIT) {
-					const currentTotalFetched = allPages.reduce(
-						(acc, page) => acc + (page.products ? page.products.length : 0),
-						0,
-					);
-					// This object becomes pageParam for the next call to queryFn
-					return { offset: currentTotalFetched, limit: LIMIT };
-				}
-				return undefined; // No more pages
-			},
+		getNextPageParam: (lastPage, allPages) => {
+			// lastPage is the result of queryFn: { products: Product[] }
+			if (lastPage.products && lastPage.products.length === LIMIT) {
+				const currentTotalFetched = allPages.reduce(
+					(acc, page) => acc + (page.products ? page.products.length : 0),
+					0,
+				);
+				// This object becomes pageParam for the next call to queryFn
+				return { offset: currentTotalFetched, limit: LIMIT };
+			}
+			return undefined; // No more pages
 		},
-	);
+		// initialPageParam: { offset: 0, limit: LIMIT } // Optional: define initial page param if not handled by queryFn default
+	});
 
 	if (isLoading && !data) {
 		return <Skeleton className="h-[700px] w-full" />; // Adjusted height for table
