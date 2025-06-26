@@ -1,6 +1,6 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
+import { useInfiniteQuery } from "@/lib/trpc/client"; // Updated import
 import { ProductsTable } from "./table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,20 +15,26 @@ export function ProductList() {
 		hasNextPage,
 		isFetchingNextPage,
 		isLoading,
-	} = trpc.getAllProducts.useInfiniteQuery(
+	} = useInfiniteQuery(
+		['getAllProducts', { limit: LIMIT }], // pathAndInput: [path, inputForFirstPage]
 		{
-			limit: LIMIT,
-		},
-		{
+			// getNextPageParam's first argument `lastPage` is the result of the tRPC call.
+			// `pageParam` from the previous call is the second argument (optional).
+			// What this function returns will be passed as input to the next tRPC call,
+			// merged with the initial input.
 			getNextPageParam: (lastPage, allPages) => {
-				if (lastPage.products.length === LIMIT) {
-					const currentOffset = allPages.reduce(
-						(acc, page) => acc + page.products.length,
+				// lastPage is { products: Product[] }
+				if (lastPage.products && lastPage.products.length === LIMIT) {
+					const currentTotalFetched = allPages.reduce(
+						(acc, page) => acc + (page.products ? page.products.length : 0),
 						0,
 					);
-					return { offset: currentOffset, limit: LIMIT };
+					// This object will be the 'input' for the next fetch,
+					// specifically, it becomes the `pageParam` which tRPC merges.
+					// The hook automatically uses this as part of the input for the next query.
+					return { offset: currentTotalFetched, limit: LIMIT };
 				}
-				return undefined;
+				return undefined; // No more pages
 			},
 		},
 	);
