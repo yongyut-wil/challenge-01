@@ -14,7 +14,7 @@ const TRPCContext = createTRPCContext<AppRouter>();
 export const trpcVanillaClient = createTRPCClient<AppRouter>({
 	links: [
 		httpBatchLink({
-			url: `${process.env.NEXT_PUBLIC_SERVER_URL}/trpc`,
+			url: `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000"}/trpc`,
 		}),
 	],
 });
