@@ -3,8 +3,8 @@
 import type { AppRouter } from "@server/routers";
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { createTRPCReact, httpBatchLink } from "@trpc/react-query"; // Changed import
-// import { createTRPCClient } from "@trpc/client"; // createTRPCReact handles client creation implicitly for hooks
+import { createTRPCReact } from "@trpc/tanstack-react-query"; // Corrected package
+import { httpBatchLink } from "@trpc/client"; // httpBatchLink is from @trpc/client
 import { useState } from "react";
 import { makeQueryClient } from "./query-client";
 
