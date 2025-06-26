@@ -8,16 +8,11 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState, type ReactNode } from "react";
 import { makeQueryClient } from "./query-client";
 
-// Initialize tRPC context and export all its utilities, including hooks
-const tRPCHooks = createTRPCContext<AppRouter>();
+// Create and export the entire tRPC context utilities object
+export const trpc = createTRPCContext<AppRouter>();
 
-export const TRPCProvider = tRPCHooks.TRPCProvider;
-export const useQuery = tRPCHooks.useQuery;
-export const useMutation = tRPCHooks.useMutation;
-export const useSubscription = tRPCHooks.useSubscription;
-export const useInfiniteQuery = tRPCHooks.useInfiniteQuery;
-export const useDehydratedState = tRPCHooks.useDehydratedState;
-export const trpcContext = tRPCHooks.useContext; // Renamed useTRPC to avoid confusion
+// Provider component remains the same, but will use trpc.TRPCProvider
+// (which is the same as the TRPCProvider from the context object)
 
 let browserQueryClient: QueryClient | undefined;
 
@@ -35,7 +30,7 @@ export function TRPCReactProvider(props: { children: ReactNode }) {
 	const queryClient = getQueryClient();
 
 	const [trpcClientInstance] = useState(() =>
-		createTRPCClient<AppRouter>({ // This is the base client for the provider
+		createTRPCClient<AppRouter>({ // Base client for the provider
 			links: [
 				httpBatchLink({
 					url: `${process.env.NEXT_PUBLIC_SERVER_URL}/trpc`,
@@ -45,10 +40,11 @@ export function TRPCReactProvider(props: { children: ReactNode }) {
 	);
 
 	return (
-		<TRPCProvider client={trpcClientInstance} queryClient={queryClient}>
+		// Use the TRPCProvider from the exported trpc object
+		<trpc.TRPCProvider client={trpcClientInstance} queryClient={queryClient}>
 			<QueryClientProvider client={queryClient}>
 				{props.children}
 			</QueryClientProvider>
-		</TRPCProvider>
+		</trpc.TRPCProvider>
 	);
 }

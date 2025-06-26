@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery } from "@/lib/trpc/client"; // Updated import
+import { trpc } from "@/lib/trpc/client"; // Import the trpc context object
 import { ProductsTable } from "./table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +15,7 @@ export function ProductList() {
 		hasNextPage,
 		isFetchingNextPage,
 		isLoading,
-	} = useInfiniteQuery(
+	} = trpc.useInfiniteQuery( // Use as a method of the imported trpc object
 		['getAllProducts', { limit: LIMIT }], // pathAndInput: [path, inputForFirstPage]
 		{
 			// getNextPageParam's first argument `lastPage` is the result of the tRPC call.
