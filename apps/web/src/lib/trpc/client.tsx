@@ -1,18 +1,23 @@
 "use client";
 
 import type { AppRouter } from "@server/routers";
-import type { QueryClient } from "@tanstack/react-query";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, type QueryClient } from "@tanstack/react-query"; // QueryClient type
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
-import { createTRPCContext } from "@trpc/tanstack-react-query";
+import { createTRPCContext } from "@trpc/tanstack-react-query"; // For TRPCProvider
 import { useState, type ReactNode } from "react";
 import { makeQueryClient } from "./query-client";
 
-// Create and export the entire tRPC context utilities object with a new name
-export const trpcClientHooks = createTRPCContext<AppRouter>();
+// Context for provider setup
+const TRPCContext = createTRPCContext<AppRouter>();
 
-// Provider component remains the same, but will use trpcClientHooks.TRPCProvider
-// (which is the same as the TRPCProvider from the context object)
+// Base tRPC client for manual calls (e.g., in queryFns)
+export const trpcVanillaClient = createTRPCClient<AppRouter>({
+	links: [
+		httpBatchLink({
+			url: `${process.env.NEXT_PUBLIC_SERVER_URL}/trpc`,
+		}),
+	],
+});
 
 let browserQueryClient: QueryClient | undefined;
 
@@ -29,22 +34,16 @@ function getQueryClient() {
 export function TRPCReactProvider(props: { children: ReactNode }) {
 	const queryClient = getQueryClient();
 
-	const [trpcClientInstance] = useState(() =>
-		createTRPCClient<AppRouter>({ // Base client for the provider
-			links: [
-				httpBatchLink({
-					url: `${process.env.NEXT_PUBLIC_SERVER_URL}/trpc`,
-				}),
-			],
-		}),
-	);
+	// Note: The `trpcClientInstance` passed to TRPCContext.TRPCProvider
+	// is the same one we are exporting as trpcVanillaClient.
+	// This ensures consistency if the provider itself uses this client.
+	const [clientForProvider] = useState(() => trpcVanillaClient);
 
 	return (
-		// Use the TRPCProvider from the renamed exported object
-		<trpcClientHooks.TRPCProvider client={trpcClientInstance} queryClient={queryClient}>
+		<TRPCContext.TRPCProvider client={clientForProvider} queryClient={queryClient}>
 			<QueryClientProvider client={queryClient}>
 				{props.children}
 			</QueryClientProvider>
-		</trpcClientHooks.TRPCProvider>
+		</TRPCContext.TRPCProvider>
 	);
 }

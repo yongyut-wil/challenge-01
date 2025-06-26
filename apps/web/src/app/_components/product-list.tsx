@@ -1,6 +1,7 @@
 "use client";
 
-import { trpcClientHooks } from "@/lib/trpc/client"; // Import the renamed trpc context object
+import { trpcVanillaClient } from "@/lib/trpc/client"; // Import the vanilla tRPC client
+import { useInfiniteQuery } from "@tanstack/react-query"; // Import from TanStack Query
 import { ProductsTable } from "./table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,23 +16,23 @@ export function ProductList() {
 		hasNextPage,
 		isFetchingNextPage,
 		isLoading,
-	} = trpcClientHooks.useInfiniteQuery( // Use as a method of the imported trpcClientHooks object
-		['getAllProducts', { limit: LIMIT }], // pathAndInput: [path, inputForFirstPage]
+	} = useInfiniteQuery(
+		['products'], // Query key for TanStack Query
+		async ({ pageParam }) => { // pageParam comes from getNextPageParam
+			const input = pageParam || { offset: 0, limit: LIMIT };
+			// Directly call the tRPC procedure using the vanilla client
+			const result = await trpcVanillaClient.getAllProducts.query(input);
+			return result; // This should be { products: Product[] }
+		},
 		{
-			// getNextPageParam's first argument `lastPage` is the result of the tRPC call.
-			// `pageParam` from the previous call is the second argument (optional).
-			// What this function returns will be passed as input to the next tRPC call,
-			// merged with the initial input.
 			getNextPageParam: (lastPage, allPages) => {
-				// lastPage is { products: Product[] }
+				// lastPage is the result of queryFn: { products: Product[] }
 				if (lastPage.products && lastPage.products.length === LIMIT) {
 					const currentTotalFetched = allPages.reduce(
 						(acc, page) => acc + (page.products ? page.products.length : 0),
 						0,
 					);
-					// This object will be the 'input' for the next fetch,
-					// specifically, it becomes the `pageParam` which tRPC merges.
-					// The hook automatically uses this as part of the input for the next query.
+					// This object becomes pageParam for the next call to queryFn
 					return { offset: currentTotalFetched, limit: LIMIT };
 				}
 				return undefined; // No more pages
